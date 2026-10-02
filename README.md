@@ -1,81 +1,90 @@
-# 💌 A Birthday Surprise for the One Who Has My Heart
+# 💌 An Interactive Birthday Gift
 
-A story‑driven birthday web experience built with **React**, **Three.js**, **GSAP**, and a whole lot of love.
-She'll type a secret code, watch a personal video, read a letter, and then open a 3D book of photos.
+A personal web experience made to celebrate a birthday. Follow a short intro, enter a special code, read a 3D birthday message, and open an interactive memory book filled with photos, music, and animations.
 
-🌐 **Live site → [https://girl-friend-birthday-website.vercel.app](https://girl-friend-birthday-website.vercel.app)**
+This project combines a story-driven birthday experience with a 3D photo book. The photos, message, music, colors, and other details have been customized for this gift.
 
-![Live status](https://img.shields.io/badge/live-vercel-success?logo=vercel)
+## ✨ The Experience
 
----
+1. **Animated introduction** with a typewriter sequence, music, and a keypad for the special code.
+2. **3D birthday message** revealed after the introduction.
+3. **Interactive 3D memory book** with page turning, direct page navigation, and particle effects.
+4. **Music and sound effects** for the intro, book, and page turns.
+5. **Clean view** to hide the book controls, plus a rotation hint for phone screens.
 
-## ✨ The flow
-
-1. 💬 **Typewriter storytelling** – romantic lines appear one after another.
-2. 🔐 **Secret passcode** – the right PIN unlocks everything.
-3. 🎥 **Cinematic video reveal** – the screen turns black, then a personal video plays.
-4. 💌 **3D love letter** – an aged‑paper note floating in space, with the full letter in Burmese and English. Scroll it, then close it.
-5. 📖 **3D proposal book** – a page‑flipping book of your photos, ending on a giant scrolling marquee.
-
-- 📱 **Phone rotation hint** and touch‑friendly navigation.
-
----
+> The keypad code is checked client-side. It is part of the experience, not an authentication or content-protection mechanism.
 
 ## 🛠️ Tech Stack
 
-| Layer      | Tools                                                     |
-| ---------- | --------------------------------------------------------- |
-| Frontend   | React, Vite, Tailwind CSS (with custom theme)             |
-| Animations | GSAP (GreenSock)                                          |
-| 3D         | Three.js, React Three Fiber, @react-three/drei, maath     |
-| Audio      | HTML5 `<audio>` for page‑flip and background music         |
-| Fonts      | Playfair Display, Montserrat, Great Vibes (self‑hosted)   |
-| Hosting    | Vercel (recommended) or Netlify                           |
+- React 19 and Vite 8
+- Three.js, React Three Fiber, and Drei for the 3D scene
+- GSAP for animation
+- Tailwind CSS for styling
+- Maath and React Icons
 
----
-
-## 🚀 Getting Started
+## 🚀 Run Locally
 
 ### Prerequisites
 
-- **Node.js** (v16 or higher)
-- **npm** (v8 or higher)
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm
 
-### Installation
+### Install and start
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/birthday-pj.git
-cd birthday-pj
-
-# Install dependencies
+git clone https://github.com/chsryn/birthday-gift.git
+cd birthday-gift
 npm install
+npm run dev
 ```
 
-### Adding your own photos
-
-Photos in `src/assets/book-pages/` are picked up **automatically**, sorted by filename:
-`page-01.jpg` is the cover, and the last file is the back cover. Use any number of images.
+Other available commands:
 
 ```bash
-# 3:4 portrait, ~1200x1600, decent quality before compressing
-ffmpeg -i input.jpg -vf "crop='min(iw,ih*3/4)':'ih'" -q:v 2 page-01.jpg
+npm run lint      # Check the code with ESLint
+npm run build     # Create a production build in dist/
+npm run preview   # Preview the production build locally
 ```
 
-The raw, full‑resolution originals are kept in `pipi/` (git‑ignored).
+## 🖼️ Customize Photos and Content
 
-### Adding your own audio
+- **Book photos:** add sequentially named, zero-padded JPG files to `src/assets/book-pages/`, such as `page-01.jpg`, `page-02.jpg`, and so on. Vite discovers and sorts them automatically. Use an even number of photos so they all fit in the book.
+- **Covers:** replace `src/assets/book/book-cover.jpg` and `src/assets/book/book-back.jpg`.
+- **Message:** edit the text in `src/components/NotePopup.jsx`.
+- **Keypad code:** change `PASSCODE` in `src/components/Keypad.jsx`.
+- **Music:** audio files are in `public/audios/`. If you rename a file, update the track list in `src/components/book/MusicPlayer.jsx` and the intro audio path in `src/components/TypewriterSequence.jsx`.
+- **Book background:** replace `public/background-image.jpg`.
 
-- `public/audios/your-background-music.mp3` – background music on the book screen
-- `public/audios/page-flip-01a.mp3` – played on every page turn
+Make sure you have permission to use and share any photos, music, or other materials you add.
 
-### Adding your own video
+## 📁 Project Structure
 
-Drop the file at `src/assets/videos/vault.mp4`. It plays automatically once the passcode is correct.
+```text
+src/
+├── App.jsx
+├── components/
+│   ├── TypewriterSequence.jsx
+│   ├── NotePopup.jsx
+│   ├── BookScreen.jsx
+│   └── book/
+│       ├── Book.jsx
+│       ├── Experience.jsx
+│       ├── MusicPlayer.jsx
+│       └── pages.js
+├── assets/
+│   ├── book-pages/
+│   ├── book/
+│   └── fonts/
+└── hooks/
+    └── useTypewriterTimeline.js
+public/
+├── audios/
+└── background-image.jpg
+```
 
----
+## 🙏 Inspiration and Attribution
 
-## 🎬 Credits
+- [GirlFriendBirthdayWebsite](https://github.com/RUSS-Sebastian/GirlFriendBirthdayWebsite) inspired the idea of a personalized birthday experience unlocked with a code and revealed in stages. The flow and content in this repository have been adapted for this gift.
+- [animated-proposal-book](https://github.com/bepoooe/animated-proposal-book) served as a reference and adaptation base for the 3D book, including its page-turning interaction. The implementation here is integrated with this project's flow, photos, audio, and controls. Its source README describes the project as private and not intended for redistribution, so request permission before redistributing adapted code.
 
-The 3D book (page‑flip physics, particles, marquee, music player) is adapted from the
-`animated-proposal-book` project, with photos, name, and audio swapped in.
+Each source repository has its own terms of use. Check its license and request permission where needed before reusing code or assets; do not assume that personal assets in this project are free to use.
