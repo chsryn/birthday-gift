@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Original full-resolution photos (86 MB) — processed copies live in src/assets/book-pages/
+pipi/

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import gsap from "gsap";
 
 export default function useTypewriterTimeline() {
@@ -15,8 +15,17 @@ export default function useTypewriterTimeline() {
   const leftPanelRef = useRef(null);
   const rightPanelRef = useRef(null);
   const keypadRef = useRef(null);
-  const leftContentRef = useRef(null); // ✨ New – sticker + text wrapper
+  const leftContentRef = useRef(null);
   const mainRevealed = useRef(false);
+  const timelineRef = useRef(null);
+  const skipStartedRef = useRef(false);
+
+  // The intro is over once either path below reveals the code panel. Kept here
+  // rather than in the component because this hook is what owns both paths,
+  // and "the skip button stayed on screen" came from the component only
+  // knowing about the click, never about the intro playing to the end.
+  const [introFinished, setIntroFinished] = useState(false);
+  const finishIntro = () => setIntroFinished(true);
 
   const texts = [
     "Some might find their way here…",
@@ -57,6 +66,7 @@ export default function useTypewriterTimeline() {
     });
 
     const tl = gsap.timeline();
+    timelineRef.current = tl;
     tl.set(mainRef.current, { opacity: 1, y: 0 });
 
     tl.to(allChars[0], {
@@ -92,6 +102,8 @@ export default function useTypewriterTimeline() {
       duration: 3.8,
       ease: "power2.out",
     });
+
+    tl.call(() => setIntroFinished(true));
 
     // Panels appear
     tl.set(overlayRef.current, { opacity: 1, pointerEvents: "auto" });
@@ -135,6 +147,98 @@ export default function useTypewriterTimeline() {
     );
   };
 
+  // Transition quickly to the code screen while keeping the passcode required.
+  const skipToCode = () => {
+    if (!mainRef.current || skipStartedRef.current) return;
+    skipStartedRef.current = true;
+    mainRevealed.current = true;
+
+    // Note: setIntroFinished(true) is NOT called here intentionally.
+    // The skip button fades out via CSS transition in the component, and
+    // onTransitionEnd calls finishIntro() to unmount it cleanly.
+    const hadIntroTimeline = Boolean(timelineRef.current);
+    timelineRef.current?.kill();
+    timelineRef.current = null;
+
+    const headingEls = [
+      heading1Ref.current,
+      heading2Ref.current,
+      heading3Ref.current,
+      heading4Ref.current,
+    ].filter(Boolean);
+    gsap.killTweensOf(headingEls);
+
+    // Hide all heading containers so the half-typed text never flashes.
+    const containers = [
+      heading1ContainerRef.current,
+      heading2ContainerRef.current,
+      heading3ContainerRef.current,
+      heading4ContainerRef.current,
+    ].filter(Boolean);
+    const animatedEls = [
+      ...containers,
+      mainRef.current,
+      overlayRef.current,
+      leftPanelRef.current,
+      rightPanelRef.current,
+      leftContentRef.current,
+      keypadRef.current,
+    ].filter(Boolean);
+    gsap.killTweensOf([...headingEls, ...animatedEls]);
+
+    if (!hadIntroTimeline) {
+      gsap.set(mainRef.current, { opacity: 1, y: 0 });
+      gsap.set(overlayRef.current, { opacity: 0 });
+      gsap.set(leftPanelRef.current, {
+        scaleY: 0,
+        transformOrigin: "bottom",
+      });
+      gsap.set(rightPanelRef.current, {
+        scaleY: 0,
+        transformOrigin: "top",
+      });
+      gsap.set(leftContentRef.current, { opacity: 0, scale: 0 });
+      gsap.set(keypadRef.current, { opacity: 0, scale: 0 });
+    }
+
+    gsap.set(overlayRef.current, { pointerEvents: "auto" });
+    const skipTimeline = gsap.timeline({
+      onComplete: () => {
+        headingEls.forEach((heading) => {
+          heading.innerHTML = "";
+        });
+      },
+    });
+    skipTimeline
+      .to(
+        containers,
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        0,
+      )
+      .to(mainRef.current, { opacity: 0, duration: 0.3 }, 0)
+      .to(overlayRef.current, { opacity: 1, duration: 0.3 }, 0)
+      .to(
+        leftPanelRef.current,
+        { scaleY: 1, duration: 0.5, ease: "power2.out" },
+        0,
+      )
+      .to(
+        rightPanelRef.current,
+        { scaleY: 1, duration: 0.5, ease: "power2.out" },
+        0,
+      )
+      .to(
+        leftContentRef.current,
+        { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.4)" },
+        0.15,
+      )
+      .to(
+        keypadRef.current,
+        { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.4)" },
+        0.15,
+      );
+  };
+
   return {
     mainRef,
     heading1ContainerRef,
@@ -149,7 +253,10 @@ export default function useTypewriterTimeline() {
     leftPanelRef,
     rightPanelRef,
     keypadRef,
-    leftContentRef, // ✨ exported
+    leftContentRef,
     revealMainContent,
+    skipToCode,
+    finishIntro,
+    introFinished,
   };
 }

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import gsap from "gsap";
-import Keypad from "./Keypad";
+import Keypad, { PASSCODE } from "./Keypad";
 
 // Stickers
 import amazedSparkle from "../assets/stickers/amazed-sparkle.gif";
@@ -8,7 +8,10 @@ import thinking from "../assets/stickers/thinking.gif";
 import sad from "../assets/stickers/sad.gif";
 import cry from "../assets/stickers/cry.gif";
 import mayaowl from "../assets/stickers/myaowl.gif";
-import vaultVideo from "../assets/videos/vault.mp4";
+import { getAudio, playFromStart } from "../audio";
+
+const INTRO_AUDIO = "/audios/midnight-rain-x-daylight.mp3";
+const INTRO_BEAT_MS = 4000;
 
 function HeadingContainer({
   containerRef,
@@ -20,12 +23,12 @@ function HeadingContainer({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 flex items-center justify-center"
+      className="absolute inset-0 flex items-center justify-center px-4"
       style={{ opacity: visible ? 1 : 0 }}
     >
       <h1
         ref={hRef}
-        className="w-full text-center font-bold leading-tight"
+        className="w-full max-w-3xl mx-auto text-center font-bold leading-tight"
         style={style}
       >
         {text}
@@ -48,7 +51,7 @@ const generateBlobs = (count) =>
     id: i,
   }));
 
-export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
+export default function TypewriterSequence({ refs, onSuccess, onIntroEnd }) {
   const {
     mainRef,
     heading1ContainerRef,
@@ -66,50 +69,52 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
     leftContentRef,
   } = refs;
 
-  // Refined, fully responsive heading style
   const headingStyle = {
     fontFamily: "'Playfair Display', serif",
     color: "#FF0000",
-    fontSize: "clamp(2rem, 8vw, 6rem)", // softer scaling across all widths
-    lineHeight: 1.2,
+    fontSize: "clamp(1.2rem, 5vw, 5rem)",
+    lineHeight: 1.25,
     fontFeatureSettings: '"liga" 0',
     fontVariantLigatures: "none",
+    wordBreak: "break-word",
+    overflowWrap: "break-word",
   };
 
   // ---------- State ----------
   const [wrongPassword, setWrongPassword] = useState(false);
   const [failCount, setFailCount] = useState(0);
   const [keypadKey, setKeypadKey] = useState(0);
+
   const [isSuccess, setIsSuccess] = useState(false);
   const [blobsDone, setBlobsDone] = useState(false);
-  const [videoVisible, setVideoVisible] = useState(false);
+  const [musicStarted, setMusicStarted] = useState(false);
+  const [isSkippingIntro, setIsSkippingIntro] = useState(false);
 
   const failOverlayRef = useRef(null);
   const entranceCompleteRef = useRef(false);
   const blobContainerRef = useRef(null);
   const blobRefs = useRef([]);
-  const videoRef = useRef(null);
   const blobs = useMemo(() => generateBlobs(20), []);
 
   const redPanelContent = useMemo(() => {
     if (failCount === 0)
       return {
         sticker: amazedSparkle,
-        text: "Enter our special telegram code",
+        text: "masukin kodenya yaa!",
       };
     if (failCount === 1)
       return {
         sticker: thinking,
-        text: "I think you mistyped the password.\nIt is our telegram code!",
+        text: "Kok salah masukin kodenya.\npadahal itu ulang tahunmu loh!",
       };
     if (failCount === 2)
       return {
         sticker: sad,
-        text: "Please try hard.\nIt is our telegram code.",
+        text: "Coba lagi ituin kodenya deh\nsekali.",
       };
     return {
       sticker: cry,
-      text: "I think the current user isn't my girlfriend",
+      text: "Kamu siapa haa! bukan miss pipi ya?",
     };
   }, [failCount]);
 
@@ -148,40 +153,28 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
     }
   }, [isSuccess]);
 
-  // --- Start video muted as soon as it’s mounted ---
   useEffect(() => {
-    if (isSuccess && videoRef.current) {
-      const video = videoRef.current;
-      video.muted = true;
-      video.play().catch(console.warn);
-    }
-  }, [isSuccess]);
-
-  // --- Crossfade: blobs out → video visible, then unmute ---
-  useEffect(() => {
-    if (blobsDone && videoRef.current) {
-      const video = videoRef.current;
-      const tl = gsap.timeline({
-        onComplete: () => {
-          setVideoVisible(true);
-          if (onSuccess) onSuccess(); // remove background, cream → black
-          video.muted = false; // audio now on
-        },
-      });
-      if (blobContainerRef.current) {
-        tl.to(
-          blobContainerRef.current,
-          { opacity: 0, duration: 1.0, ease: "power2.out" },
-          0,
-        );
-      }
-      tl.to(video, { opacity: 1, duration: 1.0, ease: "power2.out" }, 0);
-    }
+    if (!blobsDone) return;
+    if (onSuccess) onSuccess();
   }, [blobsDone, onSuccess]);
+
+  // --- Play pressed ---
+  useEffect(() => {
+    if (!musicStarted) return;
+
+    playFromStart(getAudio(INTRO_AUDIO));
+
+    const beat = setTimeout(() => {
+      if (onIntroEnd) onIntroEnd();
+    }, INTRO_BEAT_MS);
+
+    return () => clearTimeout(beat);
+  }, [musicStarted, onIntroEnd]);
 
   // --- Password submit ---
   const handlePasswordSubmit = (password) => {
-    if (password === "1027") {
+    if (password === PASSCODE) {
+      setIsSkippingIntro(true);
       setIsSuccess(true);
     } else {
       setWrongPassword(true);
@@ -204,15 +197,13 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
     });
   };
 
-  // --- Video ended → cream ---
-  const handleVideoEnded = () => {
-    if (onVideoEnd) onVideoEnd();
-  };
-
   return (
     <>
       {/* ---- Typewriter ---- */}
-      <div ref={mainRef} className="min-h-screen relative opacity-0 px-4 z-10">
+      <div
+        ref={mainRef}
+        className="h-dvh relative opacity-0 z-10 overflow-hidden"
+      >
         <HeadingContainer
           containerRef={heading1ContainerRef}
           hRef={heading1Ref}
@@ -245,26 +236,27 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
         ref={overlayRef}
         className="absolute inset-0 z-20 opacity-0 pointer-events-none"
       >
-        {/* Left panel – scrollable if content overflows */}
+        {/* Left panel – Kiri (Red Panel) */}
         <div
           ref={leftPanelRef}
-          className="absolute left-0 top-0 h-full w-1/2 flex items-center justify-center overflow-y-auto min-h-0"
+          className="absolute left-0 top-0 h-full w-1/2 flex items-center justify-center overflow-y-auto min-h-0 py-4 px-2"
           style={{ backgroundColor: "#FF0000" }}
         >
           <div
             ref={leftContentRef}
-            className="flex flex-col items-center gap-4 opacity-0 scale-0 px-4"
+            className="flex flex-col items-center justify-center gap-2 sm:gap-4 opacity-0 scale-0 px-2 my-auto w-full max-w-sm"
           >
+            {/* Stiker menyesuaikan ukuran di mobile landscape (landscape:w-28, landscape:h-28) */}
             <img
               src={redPanelContent.sticker}
               alt=""
-              className="w-56 h-56 sm:w-72 sm:h-72 object-contain drop-shadow-lg"
+              className="w-32 h-32 sm:w-64 sm:h-64 landscape:w-24 landscape:h-24 landscape:sm:w-44 landscape:sm:h-44 max-h-[35vh] object-contain drop-shadow-lg transition-all"
             />
             <p
-              className="text-white text-center font-medium leading-relaxed whitespace-pre-line"
+              className="text-white text-center font-medium leading-tight whitespace-pre-line"
               style={{
                 fontFamily: "'Montserrat', sans-serif",
-                fontSize: "clamp(0.9rem, 2.5vw, 1.2rem)",
+                fontSize: "clamp(0.75rem, 2vw, 1.2rem)",
                 letterSpacing: "0.02em",
               }}
             >
@@ -273,23 +265,57 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
           </div>
         </div>
 
-        {/* Right panel – scrollable if keypad overflows */}
+        {/* Right panel – Kanan (Keypad) */}
         <div
           ref={rightPanelRef}
-          className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-center p-4 overflow-y-auto min-h-0"
+          className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-center p-2 sm:p-4 overflow-y-auto min-h-0 py-4"
           style={{ backgroundColor: "#FFFDD0" }}
         >
-          <div ref={keypadRef} className="opacity-0 scale-0">
+          <div
+            ref={keypadRef}
+            className="opacity-0 scale-0 my-auto w-full flex justify-center"
+          >
             <Keypad key={keypadKey} onSubmit={handlePasswordSubmit} />
           </div>
         </div>
       </div>
 
+      {/* ---- Skip intro ---- */}
+      {!refs.introFinished && (
+        <button
+          type="button"
+          onClick={() => {
+            setIsSkippingIntro(true);
+            refs.skipToCode();
+          }}
+          onTransitionEnd={(e) => {
+            if (isSkippingIntro && e.propertyName === "opacity") {
+              refs.finishIntro();
+            }
+          }}
+          className={`fixed bottom-4 right-4 z-[100] flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-medium pointer-events-auto cursor-pointer transition-opacity duration-[120ms] ease-out ${isSkippingIntro ? "opacity-0 pointer-events-none" : "opacity-60 hover:opacity-100"
+            }`}
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            color: "#FF0000",
+            background: "rgba(255,253,208,0.3)",
+            border: "1px solid rgba(255,0,0,0.25)",
+            backdropFilter: "blur(6px)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Lewati Intro
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+
       {/* ---- Fail overlay ---- */}
       {wrongPassword && (
         <div
           ref={failOverlayRef}
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-8 px-6"
+          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 sm:gap-6 px-4 py-4 overflow-y-auto"
           style={{
             backgroundColor: "#FFFDD0",
             fontFamily: "'Montserrat', sans-serif",
@@ -299,29 +325,29 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
           <img
             src={mayaowl}
             alt="Maya owl"
-            className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
+            className="w-32 h-32 sm:w-64 sm:h-64 landscape:w-28 landscape:h-28 max-h-[35vh] object-contain"
           />
           <p
             className="text-center text-red-600 font-semibold leading-snug"
-            style={{ fontSize: "clamp(1.2rem, 3vw, 1.8rem)" }}
+            style={{ fontSize: "clamp(0.9rem, 2.5vw, 1.5rem)" }}
           >
-            If you are my baby, you will know it
+            Kamu salah masukin kodenya!
           </p>
           <button
             onClick={handleTryAgain}
-            className="px-8 py-3 rounded-full font-semibold text-white shadow-xl transition-transform duration-300 hover:scale-105 active:scale-95"
+            className="px-6 py-2 sm:px-8 sm:py-3 rounded-full font-semibold text-white shadow-xl transition-transform duration-300 hover:scale-105 active:scale-95"
             style={{
               backgroundColor: "#FF0000",
-              fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+              fontSize: "clamp(0.85rem, 2vw, 1.2rem)",
             }}
           >
-            Try again
+            Coba lagi
           </button>
         </div>
       )}
 
       {/* ---- Blobs (virus) ---- */}
-      {isSuccess && !videoVisible && (
+      {isSuccess && (
         <div
           ref={blobContainerRef}
           className="absolute inset-0 z-50 overflow-hidden"
@@ -348,17 +374,85 @@ export default function TypewriterSequence({ refs, onSuccess, onVideoEnd }) {
         </div>
       )}
 
-      {/* ---- Video ---- */}
-      {isSuccess && (
-        <video
-          ref={videoRef}
-          src={vaultVideo}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: 0, zIndex: 60 }}
-          playsInline
-          muted
-          onEnded={handleVideoEnded}
-        />
+      {/* ---- Play button ---- */}
+      {blobsDone && !musicStarted && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center">
+          {/* Floating music notes */}
+          <span
+            className="absolute animate-float-note-1 select-none pointer-events-none"
+            style={{ top: "28%", left: "18%", fontSize: "clamp(1.2rem,3vw,2rem)", opacity: 0.25 }}
+          >♪</span>
+          <span
+            className="absolute animate-float-note-2 select-none pointer-events-none"
+            style={{ top: "22%", right: "20%", fontSize: "clamp(1rem,2.5vw,1.6rem)", opacity: 0.2 }}
+          >♫</span>
+          <span
+            className="absolute animate-float-note-3 select-none pointer-events-none"
+            style={{ bottom: "30%", left: "22%", fontSize: "clamp(0.9rem,2vw,1.4rem)", opacity: 0.18 }}
+          >♩</span>
+          <span
+            className="absolute animate-float-note-1 select-none pointer-events-none"
+            style={{ bottom: "26%", right: "18%", fontSize: "clamp(1rem,2.5vw,1.6rem)", opacity: 0.22, animationDelay: "1.2s" }}
+          >♬</span>
+
+          <button
+            onClick={() => setMusicStarted(true)}
+            aria-label="Play music"
+            className="animate-play-entrance group relative flex flex-col items-center gap-5"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            {/* Play circle with pulse rings */}
+            <div className="relative flex items-center justify-center">
+              {/* Pulse rings */}
+              <span
+                className="animate-pulse-ring absolute rounded-full"
+                style={{
+                  width: "clamp(5rem,14vw,7rem)",
+                  height: "clamp(5rem,14vw,7rem)",
+                  border: "1.5px solid rgba(255,255,255,0.4)",
+                }}
+              />
+              <span
+                className="animate-pulse-ring-delay absolute rounded-full"
+                style={{
+                  width: "clamp(5rem,14vw,7rem)",
+                  height: "clamp(5rem,14vw,7rem)",
+                  border: "1.5px solid rgba(255,255,255,0.25)",
+                }}
+              />
+
+              {/* Main circle button */}
+              <span
+                className="relative flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+                style={{
+                  width: "clamp(4.5rem,13vw,6.5rem)",
+                  height: "clamp(4.5rem,13vw,6.5rem)",
+                  background: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(255,255,255,0.05))",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 0 40px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",
+                }}
+              >
+                {/* Play icon */}
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  style={{ width: "clamp(1.3rem,3.5vw,2rem)", marginLeft: "0.15em" }}
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+            </div>
+
+            {/* Shimmer label */}
+            <span
+              className="animate-shimmer uppercase text-[11px] sm:text-xs font-semibold"
+              style={{ letterSpacing: "0.4em" }}
+            >
+              Tap to Play
+            </span>
+          </button>
+        </div>
       )}
     </>
   );

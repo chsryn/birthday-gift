@@ -1,26 +1,46 @@
+// Built once at module scope: Math.random() is not allowed during render, and
+// re-rolling these on every render made the whole backdrop jump around.
+const particles = [...Array(60)].map(() => ({
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  size: `${Math.random() * 4 + 2}px`,
+  color: Math.random() > 0.7 ? "#ff0000" : "#D4AF37",
+  delay: `${Math.random() * 5}s`,
+  duration: `${Math.random() * 4 + 4}s`,
+  glow: `0 0 ${Math.random() * 15 + 10}px ${
+    Math.random() > 0.7 ? "rgba(255,0,0,0.8)" : "rgba(212,175,55,0.8)"
+  }`,
+}));
+
+const petals = [...Array(25)].map(() => ({
+  left: `${Math.random() * 100}%`,
+  top: `-${Math.random() * 20}%`,
+  delay: `${Math.random() * 5}s`,
+  duration: `${Math.random() * 4 + 8}s`,
+  width: `${Math.random() * 20 + 25}px`,
+  height: `${Math.random() * 25 + 30}px`,
+  rotate: `${Math.random() * 360}deg`,
+}));
+
 export default function Background() {
   return (
     <>
       {/* Particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(60)].map((_, i) => (
+        {particles.map((p, i) => (
           <div
             key={`particle-${i}`}
             className="absolute animate-particle-drift"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${Math.random() * 4 + 2}px`,
-              height: `${Math.random() * 4 + 2}px`,
-              backgroundColor: Math.random() > 0.7 ? "#ff0000" : "#D4AF37",
+              left: p.left,
+              top: p.top,
+              width: p.size,
+              height: p.size,
+              backgroundColor: p.color,
               borderRadius: "50%",
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${Math.random() * 4 + 4}s`,
-              boxShadow: `0 0 ${Math.random() * 15 + 10}px ${
-                Math.random() > 0.7
-                  ? "rgba(255,0,0,0.8)"
-                  : "rgba(212,175,55,0.8)"
-              }`,
+              animationDelay: p.delay,
+              animationDuration: p.duration,
+              boxShadow: p.glow,
             }}
           />
         ))}
@@ -28,24 +48,24 @@ export default function Background() {
 
       {/* Petals */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(25)].map((_, i) => (
+        {petals.map((p, i) => (
           <div
             key={`petal-${i}`}
             className="absolute animate-petal-fall-3d"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `-${Math.random() * 20}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${Math.random() * 4 + 8}s`,
+              left: p.left,
+              top: p.top,
+              animationDelay: p.delay,
+              animationDuration: p.duration,
             }}
           >
             <div
               style={{
-                width: `${Math.random() * 20 + 25}px`,
-                height: `${Math.random() * 25 + 30}px`,
+                width: p.width,
+                height: p.height,
                 background: "linear-gradient(135deg, #f0c6c6 0%, #d4a0a0 100%)",
                 borderRadius: "50% 0 50% 0",
-                transform: `rotate(${Math.random() * 360}deg)`,
+                transform: `rotate(${p.rotate})`,
                 boxShadow: "0 8px 16px rgba(212, 160, 160, 0.4)",
                 opacity: 0.9,
               }}

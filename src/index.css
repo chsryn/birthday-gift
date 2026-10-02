@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
-@theme {
-  --color-page-bg: #fffdd0;
+html,
+body {
+  margin: 0;
+  background: #000;
 }
 
-/* Self‑hosted Montserrat – place the downloaded .woff2 files in src/assets/fonts/ */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @font-face {
   font-family: "Montserrat";
   src: url("./assets/fonts/montserrat-v31-latin-regular.woff2") format("woff2");
@@ -51,7 +60,7 @@
 /* src/fonts.css */
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-regular.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -59,7 +68,7 @@
 
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-500.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -67,7 +76,7 @@
 
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-600.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-600.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -75,7 +84,7 @@
 
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-700.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-700.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -83,7 +92,7 @@
 
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-800.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-800.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -91,7 +100,7 @@
 
 @font-face {
   font-family: "Playfair Display";
-  src: url("./font/playfair-display-v40-latin-900.woff2") format("woff2");
+  src: url("./assets/fonts/playfair-display-v40-latin-900.woff2") format("woff2");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -100,7 +109,7 @@
 /* src/fonts.css */
 @font-face {
   font-family: "Great Vibes";
-  src: url("./font/great-vibes-v21-latin-regular.woff2") format("woff2");
+  src: url("./assets/fonts/great-vibes-v21-latin-regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -124,4 +133,47 @@ body {
 }
 .animate-flicker {
   animation: flicker 0.25s infinite alternate;
+}
+
+/* ---- Tap to Play animations ---- */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  70%  { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+.animate-pulse-ring-delay {
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) 0.6s infinite;
+}
+
+@keyframes float-note {
+  0%   { transform: translateY(0)   rotate(0deg)   scale(1);   opacity: 0.7; }
+  50%  { transform: translateY(-22px) rotate(12deg)  scale(1.1); opacity: 1; }
+  100% { transform: translateY(0)   rotate(0deg)   scale(1);   opacity: 0.7; }
+}
+.animate-float-note-1 { animation: float-note 3.2s ease-in-out infinite; }
+.animate-float-note-2 { animation: float-note 3.8s ease-in-out 0.8s infinite; }
+.animate-float-note-3 { animation: float-note 2.9s ease-in-out 1.4s infinite; }
+
+@keyframes play-entrance {
+  from { opacity: 0; transform: scale(0.82) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.animate-play-entrance {
+  animation: play-entrance 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes shimmer-text {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, #fff 40%, rgba(255,255,255,0.5) 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s linear infinite;
 }
