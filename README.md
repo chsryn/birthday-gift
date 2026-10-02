@@ -82,9 +82,6 @@ public/
 └── background-image.jpg
 ```
 
-## 🙏 Inspiration and Attribution
+## 🙏 Inspiration
 
-- [GirlFriendBirthdayWebsite](https://github.com/RUSS-Sebastian/GirlFriendBirthdayWebsite) inspired the idea of a personalized birthday experience unlocked with a code and revealed in stages. The flow and content in this repository have been adapted for this gift.
-- [animated-proposal-book](https://github.com/bepoooe/animated-proposal-book) served as a reference and adaptation base for the 3D book, including its page-turning interaction. The implementation here is integrated with this project's flow, photos, audio, and controls. Its source README describes the project as private and not intended for redistribution, so request permission before redistributing adapted code.
-
-Each source repository has its own terms of use. Check its license and request permission where needed before reusing code or assets; do not assume that personal assets in this project are free to use.
+The birthday flow and 3D memory book have been customized for this project. Use only code and assets that you own or are permitted to use and share.
