@@ -84,4 +84,9 @@ public/
 
 ## 🙏 Inspiration
 
-The birthday flow and 3D memory book have been customized for this project. Use only code and assets that you own or are permitted to use and share.
+This project was inspired by and adapted from:
+
+- [GirlFriendBirthdayWebsite](https://github.com/RUSS-Sebastian/GirlFriendBirthdayWebsite) — inspiration for the personalized, multi-stage birthday experience.
+- [animated-proposal-book](https://github.com/bepoooe/animated-proposal-book) — reference and adaptation basis for the interactive 3D book and page-turning experience.
+
+The flow, message, photos, music, and controls have been customized for this project. Credit does not replace license compliance; check the source projects' terms and obtain permission where required before redistributing adapted code or assets.
